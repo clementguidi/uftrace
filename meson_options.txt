@@ -85,6 +85,13 @@ option(
 )
 
 option(
+    'with-lttng',
+    type : 'feature',
+    value : 'auto',
+    description: 'Build with LTTng support',
+)
+
+option(
     'with-tests',
     type : 'feature',
     value : 'disabled',

@@ -269,6 +269,13 @@ else
     message('Disabling scheduler event support (disabled by: with-schedule)')
 endif
 
+#############################
+# -Dwith-lttng build option #
+#############################
+
+liblttng_ust_dep = dependency('lttng-ust', required: get_option('with-lttng'))
+liblttng_ust_is_enabled = liblttng_ust_dep.found()
+
 #########################
 # required dependencies #
 #########################
@@ -362,6 +369,7 @@ libmcount_nop_sources = [
 libmcount_sources = [
     'libmcount/dynamic.c',
     'libmcount/event.c',
+    'libmcount/lttng-probes.c',
     'libmcount/mcount.c',
     'libmcount/misc.c',
     'libmcount/plthook.c',
@@ -404,6 +412,15 @@ libmcount = shared_library(
     include_directories: [libmcount_arch_include],
     dependencies: [libmcount_base_deps],
     c_args: [common_cflags, libmcount_cflags],
+    link_args: [common_ldflags],
+    install: true,
+)
+
+libmcount_lttng = shared_library(
+    'mcount-lttng', [libmcount_arch_sources, libmcount_arch_asm_sources, libmcount_sources, version_h],
+    include_directories: [libmcount_arch_include],
+    dependencies: [libmcount_base_deps, liblttng_ust_dep],
+    c_args: [common_cflags, libmcount_cflags, '-DENABLE_LTTNG_UST', '-DLTTNG_UST_COMPAT_API_VERSION=0'],
     link_args: [common_ldflags],
     install: true,
 )
@@ -805,6 +822,7 @@ libelf_is_enabled       = (libelf_is_enabled)       ? text_on : text_off
 libluajit_is_enabled    = (libluajit_is_enabled)    ? text_on : text_off
 libpython_is_enabled    = (libpython_is_enabled)    ? text_on : text_off
 libncurses_is_enabled   = (libncurses_is_enabled)   ? text_on : text_off
+liblttng_ust_is_enabled = (liblttng_ust_is_enabled) ? text_on : text_off
 cxa_demangle_is_enabled = (cxa_demangle_is_enabled) ? text_on : text_off
 perf_clockid_is_enabled = (perf_clockid_is_enabled) ? text_on : text_off
 perf_ctxsw_is_enabled   = (perf_ctxsw_is_enabled)   ? text_on : text_off
@@ -816,6 +834,7 @@ message('          libelf: [ @0@ ] - more flexible ELF data handling'.format(lib
 message('       libluajit: [ @0@ ] - luajit scripting support'.format(libluajit_is_enabled))
 message('       libpython: [ @0@ ] - python scripting support'.format(libpython_is_enabled))
 message('      libncurses: [ @0@ ] - terminal UI support'.format(libncurses_is_enabled))
+message('    liblttng-ust: [ @0@ ] - LTTng-UST support'.format(liblttng_ust_is_enabled))
 message('    cxa_demangle: [ @0@ ] - full demangler support with libstdc++'.format(cxa_demangle_is_enabled))
 message('      perf event: [ @0@ ] - perf event support'.format(perf_clockid_is_enabled))
 message('   perf schedule: [ @0@ ] - perf scheduler event support'.format(perf_ctxsw_is_enabled))

@@ -102,6 +102,9 @@ char * get_libmcount_path(struct opts *opts)
 	if (opts->nop) {
 		libmcount = "libmcount-nop.so";
 	}
+	else if (opts->libmcount_lttng) {
+		libmcount = "libmcount-lttng.so";
+	}
 	else if (opts->libmcount_single && !must_use_multi_thread) {
 		if (can_use_fast_libmcount(opts))
 			libmcount = "libmcount-fast-single.so";

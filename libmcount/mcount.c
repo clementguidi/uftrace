@@ -29,6 +29,11 @@
 #include "utils/filter.h"
 #include "utils/script.h"
 
+#ifdef ENABLE_LTTNG_UST
+#define TRACEPOINT_DEFINE
+#include "libmcount/lttng-events.h"
+#endif /* ENABLE_LTTNG_UST */
+
 /* time filter in nsec */
 uint64_t mcount_threshold;
 
@@ -995,6 +1000,10 @@ void mcount_entry_filter_record(struct mcount_thread_data *mtdp,
 				struct uftrace_trigger *tr,
 				struct mcount_regs *regs)
 {
+#ifdef ENABLE_LTTNG_UST
+	tracepoint(lttng_ust_cyg_profile, func_entry, (void*) rstack->child_ip, (void*) rstack->parent_ip);
+#endif /* ENABLE_LTTNG_UST */
+
 	if (mtdp->filter.out_count > 0 ||
 	    (mtdp->filter.in_count == 0 && mcount_filter_mode == FILTER_MODE_IN))
 		rstack->flags |= MCOUNT_FL_NORECORD;
@@ -1103,6 +1112,10 @@ void mcount_exit_filter_record(struct mcount_thread_data *mtdp,
 			       long *retval)
 {
 	uint64_t time_filter = mtdp->filter.time;
+
+#ifdef ENABLE_LTTNG_UST
+	tracepoint(lttng_ust_cyg_profile, func_exit, (void*) rstack->child_ip, (void*) rstack->parent_ip);
+#endif /* ENABLE_LTTNG_UST */
 
 	pr_dbg3("<%d> exit  %lx\n", mtdp->idx, rstack->child_ip);
 
@@ -1354,6 +1367,7 @@ static int __mcount_entry(unsigned long *parent_loc, unsigned long child,
 		if (mcount_auto_recover)
 			mcount_auto_restore(mtdp);
 	}
+
 
 	mcount_entry_filter_record(mtdp, rstack, &tr, regs);
 	mcount_unguard_recursion(mtdp);

@@ -82,6 +82,7 @@ enum options {
 	OPT_tid_filter,
 	OPT_num_thread,
 	OPT_no_comment,
+	OPT_libmcount_lttng,
 	OPT_libmcount_single,
 	OPT_rt_prio,
 	OPT_kernel_bufsize,
@@ -157,6 +158,7 @@ __used static const char uftrace_help[] =
 "      --kernel-only          Dump kernel data only\n"
 "      --kernel-skip-out      Skip kernel functions outside of user (deprecated)\n"
 "  -K, --kernel-depth=DEPTH   Trace kernel functions within DEPTH\n"
+"      --libmcount-lttng      Output event to LTTng-UST (record command only)\n"
 "      --libmcount-single     Use single thread version of libmcount\n"
 "      --list-event           List available events\n"
 "      --logfile=FILE         Save log messages to this file\n"
@@ -274,6 +276,7 @@ static const struct option uftrace_options[] = {
 	REQ_ARG(sort-column, OPT_sort_column),
 	REQ_ARG(num-thread, OPT_num_thread),
 	NO_ARG(no-comment, OPT_no_comment),
+	NO_ARG(libmcount-lttng, OPT_libmcount_lttng),
 	NO_ARG(libmcount-single, OPT_libmcount_single),
 	REQ_ARG(rt-prio, OPT_rt_prio),
 	NO_ARG(kernel, 'k'),
@@ -867,6 +870,10 @@ static int parse_option(struct opts *opts, int key, char *arg)
 		opts->comment = false;
 		break;
 
+	case OPT_libmcount_lttng:
+		opts->libmcount_lttng = true;
+		break;
+
 	case OPT_libmcount_single:
 		opts->libmcount_single = true;
 		break;
@@ -1387,6 +1394,16 @@ int main(int argc, char *argv[])
 
 	argc -= opts.idx;
 	argv += opts.idx;
+
+	if (opts.libmcount_lttng && opts.mode != UFTRACE_MODE_RECORD) {
+		pr_err("option --libmcount-lttng can only be use in record mode\n");
+		exit(1);
+	}
+
+	if (opts.libmcount_lttng && opts.libmcount_single) {
+		pr_err("option --libmcount-lttng is incompatible with --libmcount-single\n");
+		exit(1);
+	}
 
 	switch (opts.mode) {
 	case UFTRACE_MODE_RECORD:
